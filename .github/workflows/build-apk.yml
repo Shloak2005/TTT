@@ -2,6 +2,7 @@ name: Build F1 Championship APK
 on:
   push:
     branches: [ main, 'f1-apk-*' ]
+  pull_request:
   workflow_dispatch:
 
 jobs:
