@@ -81,3 +81,9 @@ Adding a player to an unoccupied F1 car makes them the human controlling that ca
 - For best accuracy use a direct game screenshot instead of a phone photo of a monitor, or crop close around the dark table. The results must still be reviewed before confirming a race.
 
 **Package size** should remain far below 200 MB because only the Latin bundled ML Kit model is used. The signed debug APK is a development package, not a Play Store release.
+
+## Installing alongside the original app
+
+The **Plus** variant uses a different Android application ID, because one-off debug keystores from different GitHub cloud runners have incompatible signatures. This avoids forcing an uninstall of your original F1 Championship app and losing its private data. It launches as **F1 Championship Plus** alongside the previous APK. Its initial data includes the original three races, and all 22 drivers. Later race entries stored only inside the original APK do **not** migrate automatically; they will need to be re-entered.
+
+The **PLAYERS** tab also includes JSON backup/restore for all local championship data, human names, and F1 driver assignments. Use it before changing to a future version. It cannot import directly from the original APK, which had no JSON backup feature.
