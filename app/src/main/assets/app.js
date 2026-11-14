@@ -208,6 +208,8 @@ function renderPlayers(){
     `<div class="section-header"><h2>ADD A PLAYER</h2><small>${free.length} available drivers</small></div>`+
     (free.length?`<div class="card"><label class="field-label" for="newPlayerName">Player name</label><input id="newPlayerName" class="text-input" maxlength="40" placeholder="e.g. Aryan" autocomplete="off"><label class="field-label" for="newPlayerDriver">Choose an available F1 driver</label><select id="newPlayerDriver" class="text-input">${playerSeatOptions(null)}</select><button class="action primary wide add-player" onclick="onAddPlayer()">+ ADD PLAYER</button></div>`:`<div class="card hint">All ${DRIVERS.length} seats have players. Remove or reassign a player before adding another.</div>`)+
     `<div class="status">Renaming a player keeps their points. Removing a player turns their F1 driver back into AI and never deletes race results. Assigning a player to an existing driver shows that driver's accumulated points, including earlier rounds.</div>`+
+    `<div class="section-header"><h2>CHAMPIONSHIP BACKUP</h2><small>Protect your progress</small></div>`+
+    `<div class="card"><div class="hint">Save a JSON backup of all race results and player assignments. Restore it on a later app version.</div><div class="actions"><button class="action secondary" onclick="downloadBackup()">↧ BACKUP</button><button class="action primary" onclick="importBackup()">↥ RESTORE</button></div></div>`+
     `<p class="footnote">Screenshots may show original F1 names (e.g. Russell) or custom player names. Both resolve to the same driver ID, so standings and exported CSV remain consistent.</p>`;
 }
 function render(){
@@ -222,4 +224,29 @@ function downloadCSV(){
    a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
  }
 }
+function downloadBackup(){
+ const backup=JSON.stringify(state,null,2);
+ if(native()&&native().exportBackup)native().exportBackup(backup);
+ else{
+  const blob=new Blob([backup],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='F1_Championship_Backup.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+ }
+}
+function importBackup(){
+ if(!native()||!native().importBackup){toast('Backup import requires the Android app.');return;}
+ native().importBackup();
+}
+window.onBackupError=function(error){toast('Backup import failed: '+error);};
+window.onBackupLoaded=function(content){
+ try{
+  const parsed=JSON.parse(content);
+  if(!parsed||!Array.isArray(parsed.races)||!parsed.races.every(r=>CORE.validRace(r,BASE_DRIVERS))||
+     (parsed.version!==1&&parsed.version!==2)||
+     (parsed.version===2&&!CORE.validatePlayers(parsed.players,BASE_DRIVERS)))
+   throw new Error('Invalid F1 championship backup');
+  if(!confirm(`Restore backup with ${parsed.races.length} races? This will replace the existing championship on this app.`))return;
+  state=CORE.loadState(parsed,BASE_DRIVERS,INITIAL);
+  refreshDrivers();draft={};manualEdits.clear();persist();render();toast('Backup restored. All standings recalculated.');
+ }catch(e){toast('Backup import failed: '+e.message);}
+};
 render();
