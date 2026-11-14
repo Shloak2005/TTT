@@ -38,6 +38,8 @@ import java.nio.charset.StandardCharsets;
 public class MainActivity extends Activity {
     private static final int PICK_SCREENSHOT = 100;
     private static final int EXPORT_CSV = 101;
+    private static final int IMPORT_BACKUP = 102;
+    private String exportMime = "text/csv";
     private WebView browser;
     private TextRecognizer recognizer;
     private String exportContent = "";
@@ -101,13 +103,39 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void exportCsv(String name, String csv) {
             runOnUiThread(() -> {
                 exportContent = csv == null ? "" : csv;
+                exportMime = "text/csv";
                 try {
                     Intent create = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                    create.setType("text/csv");
+                    create.setType(exportMime);
                     create.addCategory(Intent.CATEGORY_OPENABLE);
                     create.putExtra(Intent.EXTRA_TITLE, name == null ? "F1_standings.csv" : name);
                     startActivityForResult(create, EXPORT_CSV);
                 } catch (Exception e) { Toast.makeText(MainActivity.this, "Export unavailable", Toast.LENGTH_LONG).show(); }
+            });
+        }
+        @JavascriptInterface public void exportBackup(String json) {
+            runOnUiThread(() -> {
+                exportContent = json == null ? "" : json;
+                exportMime = "application/json";
+                try {
+                    Intent create = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                    create.setType(exportMime);
+                    create.addCategory(Intent.CATEGORY_OPENABLE);
+                    create.putExtra(Intent.EXTRA_TITLE, "F1_Championship_Backup.json");
+                    startActivityForResult(create, EXPORT_CSV);
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this,"Could not export backup",Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+        @JavascriptInterface public void importBackup() {
+            runOnUiThread(() -> {
+                try {
+                    Intent pick = new Intent(Intent.ACTION_GET_CONTENT);
+                    pick.setType("*/*");
+                    pick.addCategory(Intent.CATEGORY_OPENABLE);
+                    startActivityForResult(Intent.createChooser(pick,"Select F1 backup JSON"),IMPORT_BACKUP);
+                } catch (Exception e) {sendToPage("onBackupError",e.getMessage());}
             });
         }
     }
@@ -270,6 +298,17 @@ public class MainActivity extends Activity {
                 sendToPage("onOCRCancelled", ""); return;
             }
             scanPhoto(intent.getData());
+        }
+        if (requestCode == IMPORT_BACKUP) {
+            if(resultCode!=RESULT_OK || intent==null || intent.getData()==null)return;
+            try (InputStream input=getContentResolver().openInputStream(intent.getData())) {
+                if(input==null)throw new IllegalStateException("Could not read backup file");
+                byte[] data=new byte[1000000];
+                int used=0,n;
+                while(used<data.length && (n=input.read(data,used,data.length-used))>0)used+=n;
+                if(used==data.length)throw new IllegalStateException("Backup larger than 1 MB");
+                sendToPage("onBackupLoaded",new String(data,0,used,StandardCharsets.UTF_8));
+            } catch(Exception e) {sendToPage("onBackupError",e.getMessage());}
         }
         if (requestCode == EXPORT_CSV && resultCode == RESULT_OK && intent != null && intent.getData() != null) {
             try (OutputStream stream = getContentResolver().openOutputStream(intent.getData())) {
