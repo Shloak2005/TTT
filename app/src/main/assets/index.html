@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0c12">
+  <title>F1 Championship</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand"><span class="logo">F<span class="slash">/</span>1</span><span class="brand-divider"></span><span class="brand-label">CHAMPIONSHIP<br><small>YOUR PRIVATE SERIES</small></span></div>
+      <div id="race-count" class="race-pill">3 RACES</div>
+    </header>
+    <main id="view" class="view"></main>
+    <nav class="bottom-nav" aria-label="Main navigation">
+      <button type="button" data-tab="standings" class="nav-active" onclick="setTab('standings')"><span class="nav-icon">🏆</span><span>STANDINGS</span></button>
+      <button type="button" data-tab="scan" onclick="setTab('scan')"><span class="nav-icon">📸</span><span>ADD RACE</span></button>
+      <button type="button" data-tab="history" onclick="setTab('history')"><span class="nav-icon">🏁</span><span>RACES</span></button>
+      <button type="button" data-tab="teams" onclick="setTab('teams')"><span class="nav-icon">🏎</span><span>TEAMS</span></button>
+    </nav>
+  </div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="data.js"></script>
+  <script src="core.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
